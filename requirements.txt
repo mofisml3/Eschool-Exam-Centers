@@ -1,4 +1,4 @@
-# Used by Vercel's Python runtime (Render/Docker use pyproject.toml). Keep in sync with pyproject dependencies.
+# Installed by Streamlit Community Cloud (Vercel installs from pyproject.toml instead).
 sqlalchemy>=2.0
 pydantic>=2.0
 fastapi>=0.110
@@ -6,3 +6,4 @@ pandas>=2.0
 openpyxl>=3.1
 python-multipart>=0.0.9
 psycopg[binary]>=3.1
+streamlit>=1.35

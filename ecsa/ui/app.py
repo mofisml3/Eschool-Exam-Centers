@@ -8,18 +8,32 @@
 from __future__ import annotations
 
 import io
+import os
+import tempfile
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from ecsa.db.session import init_db, session_scope
+# Streamlit Community Cloud passes settings through st.secrets; export them as
+# environment variables before ecsa.config reads them.
+try:
+    for _k in ("ECSA_DATABASE_URL", "DATABASE_URL"):
+        if _k in st.secrets and not os.getenv(_k):
+            os.environ[_k] = str(st.secrets[_k])
+except Exception:  # no secrets file locally
+    pass
+
+from ecsa import config  # noqa: E402
+from ecsa.db.session import init_db, session_scope  # noqa: E402
 from ecsa.importer import SPECS, import_dataframe
 from ecsa.parameters.store import ParameterStore
 from ecsa.reports import (assignments_frame, attendance_sheets, center_distribution, export_scenario_excel, student_cards,
                           utilization_frames)
 from ecsa.scenarios import (RunRequest, ScenarioError, approve_scenario, compare_scenarios, data_summary, delete_scenario,
                             list_scenarios, preview_decision, run_scenario)
+from ecsa.tools.sample_data import generate
 
 st.set_page_config(page_title="ECSA — Exam Centers & Student Allocation", layout="wide")
 init_db()
@@ -36,6 +50,50 @@ def _sidebar() -> tuple[str | None, int]:
     gov = st.sidebar.selectbox("Governorate", govs, index=0 if govs else None, placeholder="import data first")
     rnd = st.sidebar.number_input("Exam round", min_value=1, value=1, step=1)
     return gov, int(rnd)
+
+
+# ---- 0. home ---------------------------------------------------------------
+
+JOURNEY = [
+    ("1 · Import data", "Upload students, subjects, student-subjects and candidate schools (or load the demo data below)."),
+    ("2 · Parameters", "Every operational value: days per round, sessions per day, safe utilization, reserve ratio, weights…"),
+    ("3 · Centers", "See how schools are ranked and which become primary, supporting or reserve centers. Adjust and preview."),
+    ("4 · Run distribution", "Build the timetable and seat every student: center → hall → session → seat. Saved as a scenario."),
+    ("5 · Compare scenarios", "Run again with different parameters, compare KPIs side by side, approve the one you want."),
+    ("6 · Reports & sheets", "Attendance sheets per hall, student exam cards, utilization dashboards, Excel export."),
+]
+
+
+def screen_home(gov):
+    st.header("Exam Centers & Student Allocation — MVP")
+    st.write("From raw student lists to a seat number for every student in every subject, with every decision explained.")
+    db_kind = config.DATABASE_URL.split("://", 1)[0]
+    if config.EPHEMERAL_STORAGE:
+        st.warning("Running on temporary storage: data disappears on restart. Attach a PostgreSQL database.")
+    else:
+        st.caption(f"Database: {db_kind} · source: {config.DATABASE_URL_SOURCE}")
+    st.subheader("The journey")
+    for name, desc in JOURNEY:
+        st.markdown(f"**{name}** — {desc}")
+    st.subheader("Try it with demo data")
+    with session_scope() as s:
+        summary = data_summary(s)
+    if summary["students"]:
+        st.info(f"Data already loaded: {summary['students']:,} students, {summary['schools']} schools, "
+                f"governorates: {', '.join(summary['governorates'])}. Use the sidebar to move through the screens.")
+    c1, c2, c3 = st.columns(3)
+    n_students = c1.select_slider("Students", [500, 1000, 2000, 5000, 10000], value=2000)
+    n_schools = c2.slider("Candidate schools", 5, 30, 12)
+    gov_name = c3.text_input("Governorate name", value="Basra")
+    if st.button("Load demo data", type="primary"):
+        with st.spinner("Generating and importing…"):
+            files = generate(Path(tempfile.mkdtemp()), governorate=gov_name, students=int(n_students), schools=int(n_schools))
+            with session_scope() as s:
+                reports = {k: import_dataframe(s, k, pd.read_csv(files[k], dtype=str)).summary()
+                           for k in ("students", "subjects", "student_subjects", "schools")}
+        st.success("Demo data loaded. Next: screen 3 to see the center decision, then screen 4 to run the distribution.")
+        st.json(reports)
+        st.rerun()
 
 
 # ---- 1. import -----------------------------------------------------------
@@ -246,8 +304,6 @@ def screen_reports(gov):
         att = st.checkbox("Include attendance sheets (larger file)")
         if st.button("Build Excel workbook"):
             buf = io.BytesIO()
-            import tempfile
-            from pathlib import Path
             out = Path(tempfile.mkdtemp()) / f"scenario_{sid}.xlsx"
             with session_scope() as s:
                 export_scenario_excel(s, sid, out, att)
@@ -258,10 +314,11 @@ def screen_reports(gov):
 
 def main():
     gov, rnd = _sidebar()
-    screen = st.sidebar.radio("Screen", ["1 · Import data", "2 · Parameters", "3 · Centers", "4 · Run distribution",
+    screen = st.sidebar.radio("Screen", ["0 · Home", "1 · Import data", "2 · Parameters", "3 · Centers", "4 · Run distribution",
                                          "5 · Compare scenarios", "6 · Reports & sheets"])
-    {"1": lambda: screen_import(gov), "2": lambda: screen_parameters(gov), "3": lambda: screen_centers(gov, rnd),
-     "4": lambda: screen_run(gov, rnd), "5": lambda: screen_compare(gov), "6": lambda: screen_reports(gov)}[screen[0]]()
+    {"0": lambda: screen_home(gov), "1": lambda: screen_import(gov), "2": lambda: screen_parameters(gov),
+     "3": lambda: screen_centers(gov, rnd), "4": lambda: screen_run(gov, rnd), "5": lambda: screen_compare(gov),
+     "6": lambda: screen_reports(gov)}[screen[0]]()
 
 
 main()

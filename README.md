@@ -47,6 +47,17 @@ Notes on the free plan: web services sleep after 15 minutes idle and take ~30 s 
 the free PostgreSQL expires after 30 days, so change `plan: free` under `databases`
 to `basic-256mb` for production. Tables and default parameters are created on first start.
 
+**UI on Streamlit Community Cloud (free, no code):** at https://share.streamlit.io choose
+*Create app*, pick this repository, branch `main`, main file `ecsa/ui/app.py`. Under
+*Advanced settings → Secrets* paste one line with the same Neon connection string Vercel uses:
+
+```toml
+ECSA_DATABASE_URL = "postgresql://user:password@host/dbname?sslmode=require"
+```
+
+The UI and the Vercel API then share one database. The Home screen has a one-click demo
+data loader for exploring the whole journey.
+
 **API on Vercel (serverless):** `vercel.json` routes every path to `api/index.py`, which
 exposes the FastAPI app; Vercel installs from `pyproject.toml` (with `requirements.txt` as a fallback), so keep both in sync. Vercel cannot run the
 Streamlit UI (no long-running processes) — use the Swagger page at `/docs`, or the UI on Render.
