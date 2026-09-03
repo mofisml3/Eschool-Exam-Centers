@@ -31,14 +31,14 @@ def populated_db(tmp_path, monkeypatch):
     monkeypatch.setattr(dbsession, "_factory", None)
 
 
-@pytest.mark.parametrize("screen", ["1 · Import data", "2 · Parameters", "3 · Centers", "4 · Run distribution",
+@pytest.mark.parametrize("screen", ["0 · Home", "1 · Import data", "2 · Parameters", "3 · Centers", "4 · Run distribution",
                                     "5 · Compare scenarios", "6 · Reports & sheets"])
 def test_screen_renders(populated_db, screen):
     at = AppTest.from_file(str(APP), default_timeout=60).run()
     assert not at.exception, at.exception
     at.sidebar.radio[0].set_value(screen).run()
     assert not at.exception, at.exception
-    assert any(screen[0] in h.value for h in at.header)
+    assert at.header and (screen[0] == "0" or any(screen[0] in h.value for h in at.header))
 
 
 def test_run_button_creates_scenario(populated_db):
@@ -52,3 +52,22 @@ def test_run_button_creates_scenario(populated_db):
         from ecsa.scenarios import list_scenarios
         scs = list_scenarios(s, "Basra")
         assert len(scs) == 2 and scs[0].params_snapshot["operating_days_per_round"] == "6"
+
+
+def test_home_demo_loader(tmp_path, monkeypatch):
+    url = f"sqlite:///{tmp_path / 'home.db'}"
+    monkeypatch.setattr(dbsession, "_engine", None)
+    monkeypatch.setattr(dbsession, "_factory", None)
+    monkeypatch.setattr(dbsession.config, "DATABASE_URL", url)
+    dbsession.init_db(url)
+    at = AppTest.from_file(str(APP), default_timeout=120).run()
+    assert not at.exception
+    at.select_slider[0].set_value(500).run()
+    at.button[0].click().run()
+    assert not at.exception, at.exception
+    with dbsession.session_scope() as s:
+        from ecsa.scenarios import data_summary
+        d = data_summary(s)
+        assert d["students"] == 500 and d["schools"] == 12 and d["governorates"] == ["Basra"]
+    monkeypatch.setattr(dbsession, "_engine", None)
+    monkeypatch.setattr(dbsession, "_factory", None)
