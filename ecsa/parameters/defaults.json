@@ -1,0 +1,140 @@
+[
+  {
+    "param_key": "students_total",
+    "param_value": "10000",
+    "unit": "student",
+    "description": "Expected admitted students in the governorate (planning figure; actual count comes from imported data)"
+  },
+  {
+    "param_key": "subjects_per_student",
+    "param_value": "7",
+    "unit": "subject",
+    "description": "Planning figure for subjects per student"
+  },
+  {
+    "param_key": "exam_rounds",
+    "param_value": "3",
+    "unit": "round",
+    "description": "Number of exam rounds per year"
+  },
+  {
+    "param_key": "operating_days_per_round",
+    "param_value": "40",
+    "unit": "day",
+    "description": "Operating days per round"
+  },
+  {
+    "param_key": "sessions_per_day",
+    "param_value": "4",
+    "unit": "session",
+    "description": "Exam sessions per day"
+  },
+  {
+    "param_key": "halls_per_center",
+    "param_value": "10",
+    "unit": "hall",
+    "description": "Default halls per center when school data is missing"
+  },
+  {
+    "param_key": "hall_capacity",
+    "param_value": "25",
+    "unit": "student/session",
+    "description": "Default hall capacity when school data is missing"
+  },
+  {
+    "param_key": "safe_utilization_rate",
+    "param_value": "0.85",
+    "unit": "ratio",
+    "description": "Safe operating share of raw capacity"
+  },
+  {
+    "param_key": "staff_full_center",
+    "param_value": "21",
+    "unit": "person",
+    "description": "Head-count for a full center"
+  },
+  {
+    "param_key": "staff_reserve_center",
+    "param_value": "5",
+    "unit": "person",
+    "description": "Head-count for a reserve center"
+  },
+  {
+    "param_key": "staff_governorate_admin",
+    "param_value": "8",
+    "unit": "person",
+    "description": "Head-count for governorate administration"
+  },
+  {
+    "param_key": "reserve_center_ratio",
+    "param_value": "0.20",
+    "unit": "ratio",
+    "description": "Reserve centers = CEIL(ratio x main centers) (decision D1)"
+  },
+  {
+    "param_key": "target_utilization_min",
+    "param_value": "0.70",
+    "unit": "ratio",
+    "description": "Lower bound of the target utilization range (decision D2)"
+  },
+  {
+    "param_key": "target_utilization_max",
+    "param_value": "0.95",
+    "unit": "ratio",
+    "description": "Upper bound; supporting centers are added above it (decision D2)"
+  },
+  {
+    "param_key": "rank_weight_capacity",
+    "param_value": "0.40",
+    "unit": "weight",
+    "description": "Composite score weight for capacity (decision D3)"
+  },
+  {
+    "param_key": "rank_weight_readiness",
+    "param_value": "0.40",
+    "unit": "weight",
+    "description": "Composite score weight for readiness (decision D3)"
+  },
+  {
+    "param_key": "rank_weight_proximity",
+    "param_value": "0.20",
+    "unit": "weight",
+    "description": "Composite score weight for proximity to student density (decision D3)"
+  },
+  {
+    "param_key": "min_readiness_score",
+    "param_value": "60",
+    "unit": "score 0-100",
+    "description": "Schools below this are excluded (decision D4)"
+  },
+  {
+    "param_key": "max_exams_per_student_per_day",
+    "param_value": "1",
+    "unit": "exam",
+    "description": "Soft limit on exams per student per day (decision D6)"
+  },
+  {
+    "param_key": "unknown_distance_km",
+    "param_value": "50",
+    "unit": "km",
+    "description": "Distance assumed when it cannot be computed (decision D7)"
+  },
+  {
+    "param_key": "load_balance_tolerance_km",
+    "param_value": "5",
+    "unit": "km",
+    "description": "Centers within this distance of the nearest are tie-broken by load (decision D10)"
+  },
+  {
+    "param_key": "emergency_margin_rate",
+    "param_value": "0.03",
+    "unit": "ratio",
+    "description": "Share of safe seats kept for emergencies when possible (decision D11)"
+  },
+  {
+    "param_key": "rest_weekdays",
+    "param_value": "",
+    "unit": "weekday list (Mon=0..Sun=6)",
+    "description": "Weekdays with no sessions, e.g. '4,5' for Friday and Saturday; empty = consecutive days (decision D5)"
+  }
+]
