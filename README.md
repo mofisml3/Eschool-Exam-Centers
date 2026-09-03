@@ -75,6 +75,16 @@ http://localhost:8501 (UI) and http://localhost:8000/docs (API).
 
 **Tests against PostgreSQL:** `ECSA_TEST_DATABASE_URL=postgresql+psycopg://user:pass@host/db pytest`
 
+## Demo data
+
+`data/demo/` holds a ready-to-upload set: 20,000 students across Baghdad, Basra and Nineveh
+with real district names and coordinates, 46 candidate schools, 7 subjects. Upload on screen 1
+in the order students → subjects → student_subjects → schools. Regenerate or resize with:
+
+```bash
+python -m ecsa.tools.sample_data --out data/demo --preset iraq3 --students 20000
+```
+
 ## Import file columns
 
 | table | required columns | optional |
