@@ -9,12 +9,19 @@ from __future__ import annotations
 
 import io
 import os
+import sys
 import tempfile
 from datetime import date
 from pathlib import Path
 
-import pandas as pd
-import streamlit as st
+# Streamlit Community Cloud runs the script from ecsa/ui without installing the
+# package, so make the repository root importable first.
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+import pandas as pd  # noqa: E402
+import streamlit as st  # noqa: E402
 
 # Streamlit Community Cloud passes settings through st.secrets; export them as
 # environment variables before ecsa.config reads them.
