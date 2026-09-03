@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from ecsa.db.models import Base
 from ecsa.parameters.store import seed_default_parameters
@@ -8,7 +9,7 @@ from ecsa.parameters.store import seed_default_parameters
 
 @pytest.fixture()
 def engine():
-    eng = create_engine("sqlite://", future=True)
+    eng = create_engine("sqlite://", future=True, poolclass=StaticPool, connect_args={"check_same_thread": False})
 
     @event.listens_for(eng, "connect")
     def _fk(dbapi_conn, _):

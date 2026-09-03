@@ -1,2 +1,2 @@
-from ecsa.scenarios.service import (RunRequest, approve_scenario, compare_scenarios, delete_scenario,  # noqa: F401
-                                    list_scenarios, run_scenario)
+from ecsa.scenarios.service import (RunRequest, ScenarioError, approve_scenario, compare_scenarios, data_summary,  # noqa: F401
+                                    delete_scenario, list_scenarios, preview_decision, run_scenario)

@@ -75,6 +75,66 @@ def seed_halls(school: SchoolRec, real_halls: list[SchoolHall] | None, params: P
             for i in range(1, school.halls_count + 1)]
 
 
+# ---- ranking + decision (shared by run and preview) ------------------------
+
+def rank_and_decide(students, schools, params, geo, include_schools=(), exclude_schools=()):
+    excluded = set(exclude_schools)
+    ranked = ranking.rank_schools([sc for sc in schools if sc.school_id not in excluded], students, params, geo)
+    if include_schools:  # forced schools go to the top, in the given order, if eligible
+        forced = {sid: i for i, sid in enumerate(include_schools)}
+        ranked.sort(key=lambda r: (0 if (r.eligible and r.school.school_id in forced) else 1,
+                                   forced.get(r.school.school_id, 10**9), r.rank or 10**9))
+        for i, r in enumerate([x for x in ranked if x.eligible], start=1):
+            r.rank = i
+    cases = capacity.exam_cases(students)
+    cands = [capacity.CandidateCapacity(r.school.school_id,
+                                        capacity.center_round_capacity(r.school.raw_capacity_per_session, params), r.score)
+             for r in ranked if r.eligible]
+    return ranked, capacity.decide_centers(cases, cands, params), cases
+
+
+def ranking_rows(ranked) -> list[dict]:
+    return [{"school_id": r.school.school_id, "name": r.school.name, "district": r.school.district, "eligible": r.eligible,
+             "rank": r.rank, "score": round(r.score, 4), "exclusion_reason": r.exclusion_reason, **r.factors} for r in ranked]
+
+
+def decision_rows(d: capacity.CenterDecision) -> dict:
+    return {"exam_cases": d.exam_cases, "avg_center_round_capacity": round(d.avg_center_round_capacity, 1),
+            "primary": d.primary, "supporting": d.supporting, "reserve": d.reserve, "main_capacity": d.main_capacity,
+            "projected_utilization": round(d.projected_utilization, 4) if d.main_capacity else None,
+            "capacity_shortfall": d.capacity_shortfall, "reserve_shortfall": d.reserve_shortfall, "notes": d.notes}
+
+
+def preview_decision(s: Session, governorate: str, exam_round: int, param_overrides: dict | None = None,
+                     include_schools=(), exclude_schools=(), as_of: date | None = None) -> dict:
+    """Screen 3: ranking + center decision without persisting anything."""
+    params = ParameterStore(s).resolve(governorate, as_of).with_overrides(param_overrides or {})
+    students = load_students(s, governorate, exam_round)
+    schools, _ = load_schools(s, governorate)
+    if not students or not schools:
+        raise ScenarioError("students with subjects and candidate schools are both required")
+    geo = DistanceResolver(params.float("unknown_distance_km"), [*students, *schools])
+    ranked, decision, cases = rank_and_decide(students, schools, params, geo, include_schools, exclude_schools)
+    return {"governorate": governorate, "exam_round": exam_round, "students": len(students), "exam_cases": cases,
+            "ranking": ranking_rows(ranked), "decision": decision_rows(decision), "params": params.snapshot()}
+
+
+def data_summary(s: Session, governorate: str | None = None) -> dict:
+    """Counts for the import screen."""
+    from sqlalchemy import func
+    q_students = select(func.count()).select_from(Student)
+    q_schools = select(func.count()).select_from(School)
+    q_cases = select(StudentSubject.exam_round, func.count()).join(Student, Student.student_id == StudentSubject.student_id)
+    if governorate:
+        q_students = q_students.where(Student.governorate == governorate)
+        q_schools = q_schools.where(School.governorate == governorate)
+        q_cases = q_cases.where(Student.governorate == governorate)
+    cases = dict(s.execute(q_cases.group_by(StudentSubject.exam_round)).all())
+    governorates = sorted(set(s.execute(select(Student.governorate).distinct()).scalars()) | set(s.execute(select(School.governorate).distinct()).scalars()))
+    return {"governorate": governorate, "students": s.execute(q_students).scalar(), "schools": s.execute(q_schools).scalar(),
+            "exam_cases_by_round": {int(k): v for k, v in cases.items()}, "governorates": governorates}
+
+
 # ---- main run ------------------------------------------------------------
 
 def run_scenario(s: Session, req: RunRequest) -> Scenario:
@@ -94,32 +154,13 @@ def run_scenario(s: Session, req: RunRequest) -> Scenario:
     log: dict = {"request": {"include_schools": req.include_schools, "exclude_schools": req.exclude_schools,
                              "param_overrides": {k: str(v) for k, v in req.param_overrides.items()}}}
 
-    # 1. ranking (خ4)
+    # 1–2. ranking and decision (خ1–خ4, D1, D2)
     geo = DistanceResolver(params.float("unknown_distance_km"), [*students, *schools])
-    excluded = set(req.exclude_schools)
-    ranked = ranking.rank_schools([sc for sc in schools if sc.school_id not in excluded], students, params, geo)
-    if req.include_schools:  # forced schools go to the top, in given order, if eligible
-        forced = {sid: i for i, sid in enumerate(req.include_schools)}
-        ranked.sort(key=lambda r: (0 if (r.eligible and r.school.school_id in forced) else 1,
-                                   forced.get(r.school.school_id, 10**9), r.rank or 10**9))
-        for i, r in enumerate([x for x in ranked if x.eligible], start=1):
-            r.rank = i
-    log["ranking"] = [{"school_id": r.school.school_id, "name": r.school.name, "eligible": r.eligible, "rank": r.rank,
-                       "score": round(r.score, 4), "exclusion_reason": r.exclusion_reason, **r.factors} for r in ranked]
-    log["excluded_by_request"] = sorted(excluded)
-
-    # 2. decision (خ1–خ3, D1, D2)
-    cases = capacity.exam_cases(students)
+    ranked, decision, cases = rank_and_decide(students, schools, params, geo, req.include_schools, req.exclude_schools)
     eligible = [r for r in ranked if r.eligible]
-    cands = [capacity.CandidateCapacity(r.school.school_id,
-                                        capacity.center_round_capacity(r.school.raw_capacity_per_session, params), r.score)
-             for r in eligible]
-    decision = capacity.decide_centers(cases, cands, params)
-    log["decision"] = {"exam_cases": cases, "avg_center_round_capacity": round(decision.avg_center_round_capacity, 1),
-                       "primary": decision.primary, "supporting": decision.supporting, "reserve": decision.reserve,
-                       "main_capacity": decision.main_capacity, "projected_utilization": round(decision.projected_utilization, 4),
-                       "capacity_shortfall": decision.capacity_shortfall, "reserve_shortfall": decision.reserve_shortfall,
-                       "notes": decision.notes}
+    log["ranking"] = ranking_rows(ranked)
+    log["excluded_by_request"] = sorted(set(req.exclude_schools))
+    log["decision"] = decision_rows(decision)
 
     # 3. persist centers + halls (D8)
     school_by_id = {sc.school_id: sc for sc in schools}
