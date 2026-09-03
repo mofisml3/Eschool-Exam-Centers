@@ -1,0 +1,47 @@
+school_id,name,governorate,district,lat,lng,halls_count,hall_capacity,readiness_score
+BGD-SCH001,Rusafa Secondary School 1,Baghdad,Rusafa,33.33595,44.41427,12,30,55
+BGD-SCH002,Kadhimiyah Secondary School 2,Baghdad,Kadhimiyah,33.38836,44.37691,10,30,75
+BGD-SCH003,Abu Ghraib Secondary School 3,Baghdad,Abu Ghraib,33.30651,44.20232,12,20,45
+BGD-SCH004,Sadr City Secondary School 4,Baghdad,Sadr City,33.40875,44.47002,14,25,95
+BGD-SCH005,Karkh Secondary School 5,Baghdad,Karkh,33.27635,44.3852,10,20,85
+BGD-SCH006,Karkh Secondary School 6,Baghdad,Karkh,33.27925,44.35666,6,25,55
+BGD-SCH007,Sadr City Secondary School 7,Baghdad,Sadr City,33.38658,44.43631,10,30,90
+BGD-SCH008,Karkh Secondary School 8,Baghdad,Karkh,33.31551,44.36522,10,30,75
+BGD-SCH009,Sadr City Secondary School 9,Baghdad,Sadr City,33.37266,44.48606,6,20,90
+BGD-SCH010,Karkh Secondary School 10,Baghdad,Karkh,33.3152,44.37832,14,25,65
+BGD-SCH011,Mansour Secondary School 11,Baghdad,Mansour,33.32507,44.31434,10,25,75
+BGD-SCH012,Sadr City Secondary School 12,Baghdad,Sadr City,33.36791,44.48454,12,25,55
+BGD-SCH013,Mahmudiyah Secondary School 13,Baghdad,Mahmudiyah,33.04608,44.3433,10,20,65
+BGD-SCH014,Mahmudiyah Secondary School 14,Baghdad,Mahmudiyah,33.04049,44.34453,8,30,45
+BGD-SCH015,Mahmudiyah Secondary School 15,Baghdad,Mahmudiyah,33.05562,44.34236,8,30,85
+BGD-SCH016,Karkh Secondary School 16,Baghdad,Karkh,33.28504,44.36815,8,30,45
+BGD-SCH017,Mahmudiyah Secondary School 17,Baghdad,Mahmudiyah,33.08593,44.3487,8,20,45
+BGD-SCH018,Sadr City Secondary School 18,Baghdad,Sadr City,33.4191,44.42307,14,25,95
+BGD-SCH019,Kadhimiyah Secondary School 19,Baghdad,Kadhimiyah,33.37604,44.32559,8,30,55
+BGD-SCH020,Abu Ghraib Secondary School 20,Baghdad,Abu Ghraib,33.27989,44.22624,10,30,90
+BSR-SCH001,Shatt Al-Arab Secondary School 1,Basra,Shatt Al-Arab,30.55698,47.90599,12,30,85
+BSR-SCH002,Zubair Secondary School 2,Basra,Zubair,30.38132,47.72065,6,20,95
+BSR-SCH003,Shatt Al-Arab Secondary School 3,Basra,Shatt Al-Arab,30.55506,47.88281,12,30,90
+BSR-SCH004,Zubair Secondary School 4,Basra,Zubair,30.37717,47.69825,10,30,90
+BSR-SCH005,Faw Secondary School 5,Basra,Faw,29.98088,48.49602,14,25,65
+BSR-SCH006,Shatt Al-Arab Secondary School 6,Basra,Shatt Al-Arab,30.55424,47.913,6,20,90
+BSR-SCH007,Zubair Secondary School 7,Basra,Zubair,30.36824,47.69854,10,25,95
+BSR-SCH008,Shatt Al-Arab Secondary School 8,Basra,Shatt Al-Arab,30.53042,47.89443,12,20,55
+BSR-SCH009,Zubair Secondary School 9,Basra,Zubair,30.39507,47.72985,8,30,70
+BSR-SCH010,Zubair Secondary School 10,Basra,Zubair,30.37534,47.69901,6,25,80
+BSR-SCH011,Shatt Al-Arab Secondary School 11,Basra,Shatt Al-Arab,30.56853,47.88338,6,20,45
+BSR-SCH012,Faw Secondary School 12,Basra,Faw,29.98441,48.4957,8,20,55
+BSR-SCH013,Qurna Secondary School 13,Basra,Qurna,31.00202,47.42916,6,30,85
+BSR-SCH014,Faw Secondary School 14,Basra,Faw,29.99204,48.49702,8,20,45
+NNV-SCH001,Mosul Right Bank Secondary School 1,Nineveh,Mosul Right Bank,36.30283,43.09496,12,30,80
+NNV-SCH002,Mosul Right Bank Secondary School 2,Nineveh,Mosul Right Bank,36.30852,43.13732,6,30,70
+NNV-SCH003,Sinjar Secondary School 3,Nineveh,Sinjar,36.35574,41.85874,10,25,70
+NNV-SCH004,Sinjar Secondary School 4,Nineveh,Sinjar,36.35606,41.8618,14,30,75
+NNV-SCH005,Mosul Left Bank Secondary School 5,Nineveh,Mosul Left Bank,36.37569,43.12384,8,25,75
+NNV-SCH006,Hamdaniya Secondary School 6,Nineveh,Hamdaniya,36.2744,43.37809,10,20,85
+NNV-SCH007,Sheikhan Secondary School 7,Nineveh,Sheikhan,36.67946,43.33236,14,20,45
+NNV-SCH008,Mosul Left Bank Secondary School 8,Nineveh,Mosul Left Bank,36.38789,43.17219,12,30,65
+NNV-SCH009,Mosul Left Bank Secondary School 9,Nineveh,Mosul Left Bank,36.35183,43.18075,14,30,45
+NNV-SCH010,Tal Afar Secondary School 10,Nineveh,Tal Afar,36.36934,42.44355,12,20,65
+NNV-SCH011,Hamdaniya Secondary School 11,Nineveh,Hamdaniya,36.27042,43.38622,10,25,55
+NNV-SCH012,Mosul Left Bank Secondary School 12,Nineveh,Mosul Left Bank,36.35045,43.19948,8,20,75
