@@ -73,6 +73,18 @@ def test_decide_centers_reserve_uses_main_count(params):
     assert len(d.reserve) == 2               # ceil(0.2 × 7) = 2
 
 
+def test_decide_centers_trims_when_chosen_schools_are_larger_than_average(params):
+    # avg = (60k + 60k + 10k + 10k) / 4 = 35k -> 60k/35k -> 2 primary, but S0 alone (60k) gives 1.0 > 0.95 -> keep 2
+    ranked = [CandidateCapacity("S0", 60_000, 1.0), CandidateCapacity("S1", 60_000, 0.9),
+              CandidateCapacity("S2", 10_000, 0.8), CandidateCapacity("S3", 10_000, 0.7)]
+    d = decide_centers(60_000, ranked, params)
+    assert d.primary == ["S0", "S1"]
+    # with 50k cases S0 alone gives 0.83 <= 0.95 -> trim S1
+    d = decide_centers(50_000, ranked, params)
+    assert d.primary == ["S0"] and d.reserve == ["S1"]
+    assert any("not needed" in n for n in d.notes)
+
+
 def test_decide_centers_shortfall_flagged(params):
     d = decide_centers(200_000, _cands(3), params)
     assert d.capacity_shortfall

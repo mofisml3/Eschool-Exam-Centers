@@ -80,6 +80,9 @@ def decide_centers(cases: int, ranked: list[CandidateCapacity], params: Paramete
     already-eligible candidate list (best first).
 
     primary    = CEIL(cases ÷ average candidate capacity)          (خ3)
+                 then trimmed while the *actual* capacity of the chosen
+                 schools keeps utilization <= target_max (the formula uses the
+                 average; the chosen schools are usually larger than average)
     supporting = added one by one while utilization > target_max  (D2)
     reserve    = CEIL(reserve_center_ratio × (primary+supporting)) (D1)
     """
@@ -99,6 +102,15 @@ def decide_centers(cases: int, ranked: list[CandidateCapacity], params: Paramete
     d.main_capacity = sum(c.round_capacity for c in ranked[:n_primary])
 
     target_max = params.float("target_utilization_max")
+    # trim: drop the lowest-ranked primary while the rest still meet the target
+    while len(d.primary) > 1:
+        last = ranked[len(d.primary) - 1]
+        if cases / (d.main_capacity - last.round_capacity) > target_max:
+            break
+        d.primary.pop()
+        d.main_capacity -= last.round_capacity
+        pool.insert(0, last)
+        d.notes.append(f"{last.school_id} not needed: remaining primaries stay within target utilization")
     while d.main_capacity > 0 and cases / d.main_capacity > target_max and pool:
         c = pool.pop(0)
         d.supporting.append(c.school_id)

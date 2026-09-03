@@ -82,6 +82,18 @@ class School(Base):
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
+class SchoolHall(Base):
+    """Optional real per-hall data for a school (decision D8). When present it
+    overrides the halls_count × hall_capacity seed when the school becomes a center."""
+    __tablename__ = "school_halls"
+    __table_args__ = (UniqueConstraint("school_id", "hall_name", name="uq_school_hall_name"),
+                      CheckConstraint("capacity > 0", name="ck_school_hall_capacity_positive"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    school_id: Mapped[str] = mapped_column(ForeignKey("schools.school_id", ondelete="CASCADE"), nullable=False, index=True)
+    hall_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    capacity: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
 class Center(Base):
     """A school approved as an exam center inside a scenario."""
     __tablename__ = "centers"
