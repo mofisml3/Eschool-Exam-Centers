@@ -23,14 +23,29 @@ from ecsa.scenarios import (RunRequest, ScenarioError, approve_scenario, compare
 
 
 def create_app(database_url: str | None = None, session_factory=None) -> FastAPI:
-    if session_factory is None:
-        init_db(database_url)
-        session_factory = get_session_factory()
+    """Database initialization is lazy and never crashes the process: on a
+    serverless host a failed connection would otherwise surface as an opaque
+    500. Instead /health reports the error and other endpoints answer 503."""
+    state = {"factory": session_factory, "error": None}
 
+    def ensure_db():
+        if state["factory"] is None:
+            try:
+                init_db(database_url)
+                state["factory"] = get_session_factory()
+                state["error"] = None
+            except Exception as e:  # noqa: BLE001 - report anything, do not crash
+                state["error"] = f"{type(e).__name__}: {e}"
+        return state["factory"]
+
+    ensure_db()
     app = FastAPI(title="ECSA — Exam Centers & Student Allocation", version=__version__)
 
     def db():
-        s = session_factory()
+        factory = ensure_db()
+        if factory is None:
+            raise HTTPException(503, f"database unavailable: {state['error']}")
+        s = factory()
         try:
             yield s
             s.commit()
@@ -47,9 +62,12 @@ def create_app(database_url: str | None = None, session_factory=None) -> FastAPI
 
     @app.get("/health")
     def health():
-        out = {"status": "ok", "version": __version__, "database": config.DATABASE_URL.split("://", 1)[0],
-               "database_source": config.DATABASE_URL_SOURCE}
-        if config.EPHEMERAL_STORAGE:
+        ensure_db()
+        out = {"status": "ok" if state["error"] is None else "error", "version": __version__,
+               "database": config.DATABASE_URL.split("://", 1)[0], "database_source": config.DATABASE_URL_SOURCE}
+        if state["error"]:
+            out["error"] = state["error"]
+        elif config.EPHEMERAL_STORAGE:
             out["warning"] = ("running on ephemeral storage: data is lost when the function restarts. "
                               "Attach a PostgreSQL database and set ECSA_DATABASE_URL (or DATABASE_URL).")
         return out

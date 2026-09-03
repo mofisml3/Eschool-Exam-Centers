@@ -46,3 +46,18 @@ def test_serverless_without_database_falls_back_to_tmp_and_warns(monkeypatch, tm
 def test_local_default_is_project_sqlite(monkeypatch):
     cfg = _reload_config(monkeypatch)
     assert not cfg.IS_SERVERLESS and cfg.DATABASE_URL_SOURCE == "default-sqlite" and not cfg.EPHEMERAL_STORAGE
+
+
+def test_unreachable_database_is_reported_not_crashed(monkeypatch):
+    from ecsa.db import session as dbsession
+    monkeypatch.setattr(dbsession, "_engine", None)
+    monkeypatch.setattr(dbsession, "_factory", None)
+    from ecsa.api import create_app
+    app = create_app("postgresql+psycopg://u:p@127.0.0.1:1/nope?connect_timeout=1")
+    with TestClient(app) as c:
+        h = c.get("/health").json()
+        assert h["status"] == "error" and "OperationalError" in h["error"]
+        r = c.get("/parameters/resolved")
+        assert r.status_code == 503 and "database unavailable" in r.json()["detail"]
+    monkeypatch.setattr(dbsession, "_engine", None)
+    monkeypatch.setattr(dbsession, "_factory", None)
