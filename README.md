@@ -48,7 +48,7 @@ the free PostgreSQL expires after 30 days, so change `plan: free` under `databas
 to `basic-256mb` for production. Tables and default parameters are created on first start.
 
 **API on Vercel (serverless):** `vercel.json` routes every path to `api/index.py`, which
-exposes the FastAPI app; `requirements.txt` is what Vercel installs. Vercel cannot run the
+exposes the FastAPI app; Vercel installs from `pyproject.toml` (with `requirements.txt` as a fallback), so keep both in sync. Vercel cannot run the
 Streamlit UI (no long-running processes) — use the Swagger page at `/docs`, or the UI on Render.
 
 1. In the Vercel project open *Storage → Create Database → Neon* (free) and connect it to the
