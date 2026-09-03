@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ecsa import __version__
+from ecsa import __version__, config
 from ecsa.api.schemas import ParameterIn, ParameterOut, PreviewIn, RunIn, ScenarioDetailOut, ScenarioOut
 from ecsa.db.models import Center, Hall, School, Session as ExamSession
 from ecsa.db.session import get_session_factory, init_db
@@ -47,7 +47,17 @@ def create_app(database_url: str | None = None, session_factory=None) -> FastAPI
 
     @app.get("/health")
     def health():
-        return {"status": "ok", "version": __version__}
+        out = {"status": "ok", "version": __version__, "database": config.DATABASE_URL.split("://", 1)[0],
+               "database_source": config.DATABASE_URL_SOURCE}
+        if config.EPHEMERAL_STORAGE:
+            out["warning"] = ("running on ephemeral storage: data is lost when the function restarts. "
+                              "Attach a PostgreSQL database and set ECSA_DATABASE_URL (or DATABASE_URL).")
+        return out
+
+    @app.get("/", include_in_schema=False)
+    def root():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/docs")
 
     # ---- data & import ----------------------------------------------------
     @app.get("/data/summary")

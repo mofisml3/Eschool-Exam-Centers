@@ -47,6 +47,18 @@ Notes on the free plan: web services sleep after 15 minutes idle and take ~30 s 
 the free PostgreSQL expires after 30 days, so change `plan: free` under `databases`
 to `basic-256mb` for production. Tables and default parameters are created on first start.
 
+**API on Vercel (serverless):** `vercel.json` routes every path to `api/index.py`, which
+exposes the FastAPI app; `requirements.txt` is what Vercel installs. Vercel cannot run the
+Streamlit UI (no long-running processes) — use the Swagger page at `/docs`, or the UI on Render.
+
+1. In the Vercel project open *Storage → Create Database → Neon* (free) and connect it to the
+   project. The integration sets `DATABASE_URL`, which the app picks up automatically
+   (`ECSA_DATABASE_URL` takes precedence if you set it yourself).
+2. Redeploy. `GET /health` shows which database is in use; if no database is attached it
+   falls back to a throw-away SQLite file under `/tmp` and reports a `warning`.
+3. `maxDuration` is 60 s in `vercel.json`; raise it if Fluid Compute is enabled and exports
+   of very large scenarios time out.
+
 **Locally with PostgreSQL:** `docker compose up --build` then open
 http://localhost:8501 (UI) and http://localhost:8000/docs (API).
 

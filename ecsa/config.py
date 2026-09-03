@@ -4,7 +4,9 @@ import os
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = Path(os.getenv("ECSA_DATA_DIR", ROOT_DIR / "data"))
+IS_SERVERLESS = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+# Serverless platforms only allow writes under /tmp.
+DATA_DIR = Path(os.getenv("ECSA_DATA_DIR", "/tmp/ecsa" if IS_SERVERLESS else ROOT_DIR / "data"))
 EXPORT_DIR = DATA_DIR / "exports"
 
 
@@ -18,4 +20,16 @@ def normalize_database_url(url: str) -> str:
     return url
 
 
-DATABASE_URL = normalize_database_url(os.getenv("ECSA_DATABASE_URL", f"sqlite:///{DATA_DIR / 'ecsa.db'}"))
+def _database_url_from_env() -> tuple[str, str]:
+    """Return (url, source). Accepts our own variable first, then the names
+    that hosted PostgreSQL integrations (Neon on Vercel, Render, Heroku) set."""
+    for name in ("ECSA_DATABASE_URL", "DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL_NON_POOLING"):
+        v = os.getenv(name)
+        if v:
+            return normalize_database_url(v), name
+    return f"sqlite:///{DATA_DIR / 'ecsa.db'}", "default-sqlite"
+
+
+DATABASE_URL, DATABASE_URL_SOURCE = _database_url_from_env()
+# True when running serverless on a throw-away SQLite file: data will not persist.
+EPHEMERAL_STORAGE = IS_SERVERLESS and DATABASE_URL_SOURCE == "default-sqlite"
