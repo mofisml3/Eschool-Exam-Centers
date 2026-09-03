@@ -17,10 +17,10 @@ def get_engine(url: str | None = None):
     global _engine, _factory
     if url is None and _engine is not None:
         return _engine
-    url = url or config.DATABASE_URL
+    url = config.normalize_database_url(url or config.DATABASE_URL)
     if url.startswith("sqlite:///") and not url.endswith(":memory:"):
         Path(url.replace("sqlite:///", "")).parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(url, future=True)
+    engine = create_engine(url, future=True, pool_pre_ping=True)
     if url.startswith("sqlite"):
         @event.listens_for(engine, "connect")
         def _fk_on(dbapi_conn, _):  # SQLite ignores FKs unless told otherwise
@@ -41,9 +41,13 @@ def init_db(url: str | None = None, seed_defaults: bool = True):
     engine = get_engine(url)
     Base.metadata.create_all(engine)
     if seed_defaults:
+        from sqlalchemy.exc import IntegrityError
         from ecsa.parameters.store import seed_default_parameters
-        with session_scope() as s:
-            seed_default_parameters(s)
+        try:
+            with session_scope() as s:
+                seed_default_parameters(s)
+        except IntegrityError:
+            pass  # another process (API vs UI) seeded the same defaults first
     return engine
 
 

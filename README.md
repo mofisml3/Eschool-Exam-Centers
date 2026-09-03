@@ -26,7 +26,31 @@ UI (six screens): `streamlit run ecsa/ui/app.py`
 API: `uvicorn ecsa.api.main:app --reload` then open `/docs`
 Tests: `pytest`
 
-Database defaults to SQLite at `data/ecsa.db`; set `ECSA_DATABASE_URL` for PostgreSQL.
+Database defaults to SQLite at `data/ecsa.db`; set `ECSA_DATABASE_URL` for PostgreSQL
+(`postgres://…`, `postgresql://…` and `postgresql+psycopg://…` are all accepted).
+
+## Deployment
+
+The app needs a long-running Python process and a persistent database, so it is
+hosted on **Render** (not Vercel, which only runs short serverless functions).
+
+**One-click on Render:** in the Render dashboard choose *New → Blueprint*, pick this
+repository and the `main` branch. `render.yaml` creates three resources:
+
+| resource | what it is | URL |
+|---|---|---|
+| `ecsa-db` | managed PostgreSQL | injected as `ECSA_DATABASE_URL` |
+| `ecsa-api` | FastAPI (Docker) | `https://ecsa-api-<id>.onrender.com/docs` |
+| `ecsa-ui` | Streamlit, six screens (Docker) | `https://ecsa-ui-<id>.onrender.com` |
+
+Notes on the free plan: web services sleep after 15 minutes idle and take ~30 s to wake;
+the free PostgreSQL expires after 30 days, so change `plan: free` under `databases`
+to `basic-256mb` for production. Tables and default parameters are created on first start.
+
+**Locally with PostgreSQL:** `docker compose up --build` then open
+http://localhost:8501 (UI) and http://localhost:8000/docs (API).
+
+**Tests against PostgreSQL:** `ECSA_TEST_DATABASE_URL=postgresql+psycopg://user:pass@host/db pytest`
 
 ## Import file columns
 
