@@ -1,0 +1,30 @@
+# Local run with PostgreSQL:  docker compose up --build
+# API: http://localhost:8000/docs   UI: http://localhost:8501
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ecsa
+      POSTGRES_USER: ecsa
+      POSTGRES_PASSWORD: ecsa
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecsa"]
+      interval: 5s
+      retries: 10
+  api:
+    build: .
+    environment:
+      ECSA_DATABASE_URL: postgresql+psycopg://ecsa:ecsa@db/ecsa
+      PORT: "8000"
+    ports: ["8000:8000"]
+    depends_on: { db: { condition: service_healthy } }
+  ui:
+    build: .
+    command: streamlit run ecsa/ui/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    environment:
+      ECSA_DATABASE_URL: postgresql+psycopg://ecsa:ecsa@db/ecsa
+    ports: ["8501:8501"]
+    depends_on: { db: { condition: service_healthy } }
+volumes:
+  pgdata:
